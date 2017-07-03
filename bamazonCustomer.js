@@ -12,6 +12,7 @@ var connection = mysql.createConnection({
 connection.connect(function(err) {
     if (err) throw err;
     console.log('connected as id ' + connection.threadId);
+    start();
 });
 
 var queryString = 'SELECT * FROM products';
@@ -53,10 +54,14 @@ function start() {
                         var quant = parseInt(quantParsed.quantity);
                         console.log(quant + " | " + res[prodId].stock_quantity);
                         var newStock = res[prodId].stock_quantity - quant;
-                        if (quant < res[prodId].stock_quantity) {
-                            updateRow(newStock, (prodId + 1));
+                        if (quant < res[prodId].stock_quantity) {                            
                             var cost2 = quant * res[prodId].price;
                             var cost = cost2.toFixed(2);
+                            var productSales = res[prodId].product_sales;
+                            var sales2 = productSales.toFixed(2);                           
+                            var sales = parseFloat(sales2) + parseFloat(cost);
+                            console.log("sales  " + sales);
+                            updateRow(newStock, sales, (prodId + 1));
                             console.log('Transaction Successful!  You have been charged $' + cost);
                         } else {
                             console.log('Insuffecient Quantity!');
@@ -67,10 +72,11 @@ function start() {
     });
 }
 
-function updateRow(stock, id) {
+function updateRow(stock, sales, id) {
     connection.query(
         "UPDATE products SET ? WHERE ?", [{
-            stock_quantity: stock
+            stock_quantity: stock,
+            product_sales: sales
         }, {
             id: id
         }],
@@ -78,5 +84,9 @@ function updateRow(stock, id) {
             if (err) throw err;
         });
 }
+
+
+
+
 
 // module.exports = connection.connect;
