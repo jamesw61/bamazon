@@ -30,9 +30,7 @@ function start() {
             'Add New Product'
         ]
     }]).then(function(answer) {
-        var pick3 = JSON.stringify(answer, null, '  ');
-        var pick2 = JSON.parse(pick3);
-        var pick = pick2.menuPick;
+        var pick = answer.menuPick;
         console.log(pick);
         switch (pick) {
             case 'View Products for Sale':
@@ -51,6 +49,7 @@ function start() {
                 addProduct();
                 break;
         }
+        // connection.end();
     });
 }
 
@@ -63,7 +62,9 @@ var view = function(queryString) {
             console.log(res[i].id + " | " + res[i].name + " | " + res[i].dept + " | " + res[i].price + " | " + res[i].stock_quantity + "\n");
         }
     });
+    connection.end();
 }
+
 var choiceArray = [];
 var addInventory = function() {
     var query = 'SELECT * FROM products';
@@ -86,15 +87,23 @@ var addInventory = function() {
                 message: 'How many would you like to add?'
             }])
             .then(function(answer) {
+                console.log(answer);
                 var x = JSON.stringify(answer, null, 2);
                 var y = JSON.parse(x);
-                var amount = parseInt(y.amount);
-                name = y.product;
+                // var amount = parseInt(y.amount);
+                var amount = parseInt(answer.amount);
+                console.log(amount);
+
+                // name = y.product;
+                name = answer.product;
+                console.log(name);
+
                 console.log(name + "    " + amount);
                 for (let j = 0; j < res.length; j++) {
                     if (res[j].name === name) {
                         stock = res[j].stock_quantity + amount;
                         updateRow(stock, name);
+                        connection.end();
                         return;
                     }
                 }
@@ -110,6 +119,7 @@ function updateRow(stock, name) {
             name: name
         }],
         function(err, res) {
+            console.log(res);
             if (err) throw err;
         });
 }
@@ -145,14 +155,13 @@ function addProduct() {
 }
 
 
-function createRow(name, dept, price, quantity){
-    connection.query("INSERT INTO products SET ?",
-    {
+function createRow(name, dept, price, quantity) {
+    connection.query("INSERT INTO products SET ?", {
         name: name,
         dept: dept,
         price: price,
         stock_quantity: quantity
-    }, function(err,res){
-        if(err) throw err;        
+    }, function(err, res) {
+        if (err) throw err;
     });
 }

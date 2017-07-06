@@ -38,34 +38,27 @@ function start() {
                 }
             })
             .then(function(answer) {
-                var inputEntered = JSON.stringify(answer, null, 2);
-                var inputParsed = JSON.parse(inputEntered);
-                var prodId = parseInt(inputParsed.idEntered) - 1;
-                console.log(res[prodId].name);
-
+                var prodIndex = answer.idEntered - 1;
                 inquirer.prompt({
                         type: 'input',
                         name: 'quantity',
                         message: 'How many would you like to buy?'
                     })
                     .then(function(response) {
-                        var quantEntered = JSON.stringify(response, null, 2);
-                        var quantParsed = JSON.parse(quantEntered);
-                        var quant = parseInt(quantParsed.quantity);
-                        console.log(quant + " | " + res[prodId].stock_quantity);
-                        var newStock = res[prodId].stock_quantity - quant;
-                        if (quant < res[prodId].stock_quantity) {                            
-                            var cost2 = quant * res[prodId].price;
-                            var cost = cost2.toFixed(2);
-                            var productSales = res[prodId].product_sales;
-                            var sales2 = productSales.toFixed(2);                           
-                            var sales = parseFloat(sales2) + parseFloat(cost);
-                            console.log("sales  " + sales);
-                            updateRow(newStock, sales, (prodId + 1));
+                        var quant = response.quantity;
+                        console.log(quant + " | " + res[prodIndex].stock_quantity);
+                        var updatedStock = res[prodIndex].stock_quantity - quant;
+                        if (quant < res[prodIndex].stock_quantity) {                            
+                            var cost = (quant * res[prodIndex].price).toFixed(2);
+                            var sales = (res[prodIndex].product_sales).toFixed(2);
+                            var updatedSales = parseFloat(sales) + parseFloat(cost);
+                            // console.log("sales  " + sales);
+                            updateRow(updatedStock, updatedSales, (prodIndex + 1));
                             console.log('Transaction Successful!  You have been charged $' + cost);
                         } else {
                             console.log('Insuffecient Quantity!');
                         }
+                            connection.end();
 
                     });
             });
