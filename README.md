@@ -23,4 +23,8 @@ are low availability.  The user can then add inventory to any product or list an
 bamazonSupervisor.js allows the user to view the sales for each department or add another department to the database.
 
 
+*example table*
+Customer | Manager | Superviser
+---------|---------|-----------
+buy products | edit products | view sales/edit dept
 
