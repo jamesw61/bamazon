@@ -1,17 +1,18 @@
 'use strict';
 var mysql = require("mysql");
+var connection = require('./connection');
 var inquirer = require('inquirer');
 var Table = require('cli-table');
 var table = new Table({
     head: ['Department Id', 'Department Name', 'Overhead Costs', 'Product Sales', 'Total Profit']
 });
-var connection = mysql.createConnection({
-    host: "localhost",
-    port: 3306,
-    user: "root",
-    password: "steel61sql",
-    database: 'bamazon'
-});
+// var connection = mysql.createConnection({
+//     host: "localhost",
+//     port: 3306,
+//     user: "root",
+//     password: "steel61sql",
+//     database: 'bamazon'
+// });
 
 connection.connect(function(err) {
     if (err) throw err;
