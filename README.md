@@ -24,7 +24,16 @@ bamazonSupervisor.js allows the user to view the sales for each department or ad
 
 
 *example table*
-Customer | Manager | Superviser
+First Header | Second Header
+------------ | -------------
+Content from cell 1 | Content from cell 2
+Content in the first column | Content in the second column
+
+
+
+
+Customer | Manager | Supervisor
 ---------|---------|-----------
 buy products | edit products | view sales/edit dept
+Content in the first column | Content in the second column | more content
 
