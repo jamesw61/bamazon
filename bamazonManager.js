@@ -1,7 +1,13 @@
 'use strict';
 var mysql = require("mysql");
 var inquirer = require('inquirer');
-// var connection = require('./bamazonCustomer');
+var Table = require('cli-table');
+var table = new Table({
+    head: ['Id', 'Product', 'Department', 'Price', 'Quantity Available']
+});
+var query = 'SELECT * FROM products ORDER BY dept, price';
+var query2 = 'SELECT * FROM products WHERE stock_quantity < 5';
+var choiceArray = [];
 var connection = mysql.createConnection({
     host: "localhost",
     port: 3306,
@@ -9,7 +15,6 @@ var connection = mysql.createConnection({
     password: "steel61sql",
     database: 'bamazon'
 });
-
 
 connection.connect(function(err) {
     if (err) throw err;
@@ -31,43 +36,39 @@ function start() {
         ]
     }]).then(function(answer) {
         var pick = answer.menuPick;
-        console.log(pick);
+        console.log('---------------');
+        console.log("You chose: " + pick);
+        console.log('---------------');
         switch (pick) {
             case 'View Products for Sale':
-                var query = 'SELECT * FROM products';
                 view(query);
                 break;
             case 'View Low Inventory':
-                var query2 = 'SELECT * FROM products WHERE stock_quantity < 5';
                 view(query2);
                 break;
             case 'Add to Inventory':
                 addInventory();
                 break;
             case 'Add New Product':
-                console.log('d');
                 addProduct();
                 break;
         }
-        // connection.end();
     });
 }
 
 var view = function(queryString) {
     connection.query(queryString, function(err, res) {
         if (err) throw err;
-        console.log("\nId | Product | Department | Price | Quantity Available");
         for (let i = 0; i < res.length; i++) {
-            console.log("--------------------")
-            console.log(res[i].id + " | " + res[i].name + " | " + res[i].dept + " | " + res[i].price + " | " + res[i].stock_quantity + "\n");
+            table.push([res[i].id, res[i].name, res[i].dept, res[i].price, res[i].stock_quantity]);
         }
+        console.log(table.toString());
     });
     connection.end();
 }
 
-var choiceArray = [];
+
 var addInventory = function() {
-    var query = 'SELECT * FROM products';
     var name = "";
     var stock = 0;
     connection.query(query, function(err, res) {
@@ -75,11 +76,11 @@ var addInventory = function() {
         for (let i = 0; i < res.length; i++) {
             choiceArray.push(res[i].name);
         }
-        console.log(choiceArray);
         inquirer.prompt([{
                 type: 'rawlist',
                 name: 'product',
                 message: "What product would you like to replenish?",
+                pageSize: 15,
                 choices: choiceArray
             }, {
                 type: 'input',
@@ -87,24 +88,19 @@ var addInventory = function() {
                 message: 'How many would you like to add?'
             }])
             .then(function(answer) {
-                console.log(answer);
-                var x = JSON.stringify(answer, null, 2);
-                var y = JSON.parse(x);
-                // var amount = parseInt(y.amount);
                 var amount = parseInt(answer.amount);
-                console.log(amount);
-
-                // name = y.product;
                 name = answer.product;
-                console.log(name);
-
-                console.log(name + "    " + amount);
                 for (let j = 0; j < res.length; j++) {
                     if (res[j].name === name) {
                         stock = res[j].stock_quantity + amount;
+                        console.log('-----------------');
+                        console.log('The current inventory is: ' + res[j].stock_quantity);
+                        console.log('-----------------');
+                        console.log('You added ' + amount + ' to the inventory.');
+                        console.log('-----------------');
+                        console.log('The new inventory is: ' + stock);
+                        console.log('-----------------');
                         updateRow(stock, name);
-                        connection.end();
-                        return;
                     }
                 }
             });
@@ -119,20 +115,30 @@ function updateRow(stock, name) {
             name: name
         }],
         function(err, res) {
-            console.log(res);
+            // console.log(res);
             if (err) throw err;
+            view(query);
         });
 }
 
 function addProduct() {
+    choiceArray = [];
+    connection.query('SELECT department_name FROM departments', function(err, res) {
+        if (err) throw err;
+        for (let i = 0; i < res.length; i++) {
+            choiceArray.push(res[i].department_name);
+        }
+    });
     inquirer.prompt([{
             type: 'input',
             name: 'name',
             message: 'What product would you like to add?'
         }, {
-            type: 'input',
+            type: 'rawlist',
             name: 'dept',
-            message: 'What department?'
+            message: "What department?",
+            pageSize: 15,
+            choices: choiceArray
         }, {
             type: 'input',
             name: 'price',
@@ -143,25 +149,23 @@ function addProduct() {
             message: 'How many will be stocked?'
         }])
         .then(function(answer) {
-            var x = JSON.stringify(answer, null, 2);
-            var y = JSON.parse(x);
-            console.log(y);
-            var name = y.name;
-            var dept = y.dept;
-            var price = parseFloat(y.price);
-            var quantity = parseInt(y.stock_quantity);
+            var name = answer.name;
+            var dept = answer.dept;
+            var price = parseFloat(answer.price).toFixed(2);
+            var quantity = parseInt(answer.stock_quantity);
             createRow(name, dept, price, quantity);
         });
 }
-
 
 function createRow(name, dept, price, quantity) {
     connection.query("INSERT INTO products SET ?", {
         name: name,
         dept: dept,
         price: price,
-        stock_quantity: quantity
+        stock_quantity: quantity,
+        product_sales: 0.00
     }, function(err, res) {
         if (err) throw err;
+        view(query);
     });
 }

@@ -1,6 +1,10 @@
 'use strict';
 var mysql = require("mysql");
 var inquirer = require('inquirer');
+var Table = require('cli-table');
+var table = new Table({
+    head: ['Id', 'Product', 'Department', 'Price', 'Quantity Available']
+});
 var connection = mysql.createConnection({
     host: "localhost",
     port: 3306,
@@ -20,25 +24,27 @@ var queryString = 'SELECT * FROM products';
 function start() {
     connection.query(queryString, function(err, res) {
         if (err) throw err;
-        console.log("\nId | Product | Department | Price | Quantity Available");
         for (let i = 0; i < res.length; i++) {
-            console.log("--------------------")
-            console.log(res[i].id + " | " + res[i].name + " | " + res[i].dept + " | " + res[i].price + " | " + res[i].stock_quantity + "\n");
-
+            table.push([i + 1, res[i].name, res[i].dept, res[i].price, res[i].stock_quantity]);
         }
+        console.log(table.toString());
         inquirer.prompt({
                 type: 'input',
                 name: 'idEntered',
                 message: "Enter the Id of the product you would like to buy",
                 validate: function(value) {
-                    if (res[value].id) {
+                    if (value < res.length + 1) {
                         return true;
                     }
-                    return 'Please enter a valid Id number';
+                    return '\nPlease enter a valid id';
                 }
+
             })
             .then(function(answer) {
                 var prodIndex = answer.idEntered - 1;
+                console.log('--------------');
+                console.log('You chose ' + res[prodIndex].name);
+                console.log('--------------');
                 inquirer.prompt({
                         type: 'input',
                         name: 'quantity',
@@ -46,40 +52,36 @@ function start() {
                     })
                     .then(function(response) {
                         var quant = response.quantity;
-                        console.log(quant + " | " + res[prodIndex].stock_quantity);
                         var updatedStock = res[prodIndex].stock_quantity - quant;
-                        if (quant < res[prodIndex].stock_quantity) {                            
+                        if (quant < res[prodIndex].stock_quantity) {
                             var cost = (quant * res[prodIndex].price).toFixed(2);
                             var sales = (res[prodIndex].product_sales).toFixed(2);
                             var updatedSales = parseFloat(sales) + parseFloat(cost);
-                            // console.log("sales  " + sales);
-                            updateRow(updatedStock, updatedSales, (prodIndex + 1));
+                            updateRow(updatedStock, updatedSales, res[prodIndex].name);
+                            console.log('--------------');
+                            console.log('Number of ' + res[prodIndex].name + ' bought: ' + quant);
                             console.log('Transaction Successful!  You have been charged $' + cost);
+                            console.log('--------------');
                         } else {
+                            console.log('--------------');
                             console.log('Insuffecient Quantity!');
+                            console.log('--------------');
                         }
-                            connection.end();
-
+                        connection.end();
                     });
             });
     });
 }
 
-function updateRow(stock, sales, id) {
+function updateRow(stock, sales, name) {
     connection.query(
         "UPDATE products SET ? WHERE ?", [{
             stock_quantity: stock,
             product_sales: sales
         }, {
-            id: id
+            name: name
         }],
         function(err, res) {
             if (err) throw err;
         });
 }
-
-
-
-
-
-// module.exports = connection.connect;
