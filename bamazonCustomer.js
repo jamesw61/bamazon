@@ -5,6 +5,7 @@ var Table = require('cli-table');
 var table = new Table({
     head: ['Id', 'Product', 'Department', 'Price', 'Quantity Available']
 });
+var queryString = 'SELECT * FROM products';
 var connection = mysql.createConnection({
     host: "localhost",
     port: 3306,
@@ -18,8 +19,6 @@ connection.connect(function(err) {
     console.log('connected as id ' + connection.threadId);
     start();
 });
-
-var queryString = 'SELECT * FROM products';
 
 function start() {
     connection.query(queryString, function(err, res) {
@@ -64,7 +63,7 @@ function start() {
                             console.log('--------------');
                         } else {
                             console.log('--------------');
-                            console.log('Insuffecient Quantity!');
+                            console.log('Insufficient Quantity!');
                             console.log('--------------');
                         }
                         connection.end();
