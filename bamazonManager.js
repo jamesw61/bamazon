@@ -1,18 +1,19 @@
 'use strict';
-var inquirer = require('inquirer');
-var connection = require('./connection');
-var table = require('./table');
+const inquirer = require('inquirer');
+const connection = require('./connection');
+const table = require('./table');
 var query = 'SELECT * FROM products ORDER BY dept, price';
 var query2 = 'SELECT * FROM products WHERE stock_quantity < 5';
-var choiceArray = [];
 
-connection.connect(function(err) {
+const log = x => console.log(x);
+
+connection.connect((err) => {
     if (err) throw err;
-    console.log('connected as id ' + connection.threadId);
+    log(`connected as id  ${connection.threadId}`);
     start();
 });
 
-function start() {
+const start = () => {
     inquirer.prompt([{
         type: 'rawlist',
         name: 'menuPick',
@@ -24,11 +25,11 @@ function start() {
             'Add to Inventory',
             'Add New Product'
         ]
-    }]).then(function(answer) {
-        var pick = answer.menuPick;
-        console.log('---------------');
-        console.log("You chose: " + pick);
-        console.log('---------------');
+    }]).then((answer) => {
+        let pick = answer.menuPick;
+        log('---------------');
+        log("You chose: " + pick);
+        log('---------------');
         switch (pick) {
             case 'View Products for Sale':
                 view(query);
@@ -46,22 +47,24 @@ function start() {
     });
 }
 
-var view = function(queryString) {
-    connection.query(queryString, function(err, res) {
-        if (err) throw err;
-        for (let i = 0; i < res.length; i++) {
-            table.push([res[i].id, res[i].name, res[i].dept, res[i].price, res[i].stock_quantity]);
+const view = (queryString) => {
+    connection.query(queryString, (err, res) => {
+        if (err) throw err;        
+        for (let i in res) {
+            let { id, name, dept, price, stock_quantity } = res[i];
+            table.push([id, name, dept, price, stock_quantity]);
         }
-        console.log(table.toString());
+        // for (let i in res) {
+        //     table.push([res[i].id, res[i].name, res[i].dept, res[i].price, res[i].stock_quantity]);
+        // }
+        log(table.toString());
     });
     connection.end();
 }
 
-
-var addInventory = function() {
-    var name = "";
-    var stock = 0;
-    connection.query(query, function(err, res) {
+const addInventory = () => {
+    let choiceArray = [];
+    connection.query(query, (err, res) => {
         if (err) throw err;
         for (let i = 0; i < res.length; i++) {
             choiceArray.push(res[i].name);
@@ -77,19 +80,19 @@ var addInventory = function() {
                 name: 'amount',
                 message: 'How many would you like to add?'
             }])
-            .then(function(answer) {
-                var amount = parseInt(answer.amount);
-                name = answer.product;
-                for (let j = 0; j < res.length; j++) {
-                    if (res[j].name === name) {
-                        stock = res[j].stock_quantity + amount;
-                        console.log('-----------------');
-                        console.log('The current inventory is: ' + res[j].stock_quantity);
-                        console.log('-----------------');
-                        console.log('You added ' + amount + ' to the inventory.');
-                        console.log('-----------------');
-                        console.log('The new inventory is: ' + stock);
-                        console.log('-----------------');
+            .then((answer) => {
+                let amount = parseInt(answer.amount);
+                let name = answer.product;
+                for (let i = 0; i < res.length; i++) {
+                    if (res[i].name === name) {
+                        let stock = res[i].stock_quantity + amount;
+                        log('-----------------');
+                        log(`The current inventory is: ${res[i].stock_quantity}`);
+                        log('-----------------');
+                        log(`You added ${amount} to the inventory.`);
+                        log('-----------------');
+                        log(`The new inventory is: ${stock}`);
+                        log('-----------------');
                         updateRow(stock, name);
                     }
                 }
@@ -97,23 +100,23 @@ var addInventory = function() {
     });
 }
 
-function updateRow(stock, name) {
+const updateRow = (stock, name) => {
     connection.query(
         "UPDATE products SET ? WHERE ?", [{
             stock_quantity: stock
         }, {
             name: name
         }],
-        function(err, res) {
+        (err, res) => {
             // console.log(res);
             if (err) throw err;
             view(query);
         });
 }
 
-function addProduct() {
-    choiceArray = [];
-    connection.query('SELECT department_name FROM departments', function(err, res) {
+const addProduct = () => {
+    let choiceArray = [];
+    connection.query('SELECT department_name FROM departments', (err, res) => {
         if (err) throw err;
         for (let i = 0; i < res.length; i++) {
             choiceArray.push(res[i].department_name);
@@ -138,23 +141,23 @@ function addProduct() {
             name: 'stock_quantity',
             message: 'How many will be stocked?'
         }])
-        .then(function(answer) {
-            var name = answer.name;
-            var dept = answer.dept;
-            var price = parseFloat(answer.price).toFixed(2);
-            var quantity = parseInt(answer.stock_quantity);
+        .then((answer) => {
+            let name = answer.name;
+            let dept = answer.dept;
+            let price = parseFloat(answer.price).toFixed(2);
+            let quantity = parseInt(answer.stock_quantity);
             createRow(name, dept, price, quantity);
         });
 }
 
-function createRow(name, dept, price, quantity) {
+const createRow = (name, dept, price, quantity) => {
     connection.query("INSERT INTO products SET ?", {
         name: name,
         dept: dept,
         price: price,
         stock_quantity: quantity,
         product_sales: 0.00
-    }, function(err, res) {
+    }, (err, res) => {
         if (err) throw err;
         view(query);
     });

@@ -1,42 +1,42 @@
 'use strict';
-var connection = require('./connection');
-var inquirer = require('inquirer');
-var Table = require('cli-table');
+const connection = require('./connection');
+const inquirer = require('inquirer');
+const Table = require('cli-table');
 var table = new Table({
     head: ['Department Id', 'Department Name', 'Overhead Costs', 'Product Sales', 'Total Profit']
 });
 
-connection.connect(function(err) {
+connection.connect((err) => {
     if (err) throw err;
-    console.log('connected as id ' + connection.threadId);
+    console.log(`connected as id  ${connection.threadId}`);
     start();
 });
 
-function view() {
-    var queryString = 'SELECT * FROM departments LEFT JOIN (SELECT SUM(product_sales) AS sales, dept FROM products GROUP BY dept) AS abc ON (departments.department_name = abc.dept);'
-    connection.query(queryString, function(err, res) {
+const view = () => {
+    let queryString = 'SELECT * FROM departments LEFT JOIN (SELECT SUM(product_sales) AS sales, dept FROM products GROUP BY dept) AS abc ON (departments.department_name = abc.dept);'
+    connection.query(queryString, (err, res) => {
         if (err) throw err;
-        for (let i = 0; i < res.length; i++) {
-            var sales = res[i].sales;
+        for (let i in res) {
+            let {sales, over_head_costs, department_name, department_id} = res[i];
             if (sales == null) {
                 sales = 0.00;
             }
-            var tot = (parseFloat(sales) - parseFloat(res[i].over_head_costs)).toFixed(2);
-            table.push([res[i].department_id, res[i].department_name, res[i].over_head_costs, sales, tot]);            
+            var tot = (parseFloat(sales) - parseFloat(over_head_costs)).toFixed(2);
+            table.push([department_id, department_name, over_head_costs, sales, tot]);            
         }
         	console.log(table.toString());
     });
     connection.end();
 }
 
-function start() {
+const start = () => {
     inquirer.prompt([{
             type: 'rawlist',
             name: 'menuPick',
             message: 'What would you like to do?',
             choices: ['View Product Sales by Department', 'Create New Department']
         }])
-        .then(function(answer) {
+        .then((answer) => {
             switch (answer.menuPick) {
                 case 'View Product Sales by Department':
                     view();
@@ -48,7 +48,7 @@ function start() {
         });
 }
 
-function createDept() {
+const createDept = () => {
     inquirer.prompt([{
             type: 'input',
             name: 'department_name',
@@ -58,16 +58,16 @@ function createDept() {
             name: 'over_head_costs',
             message: 'What are the overhead costs for this department?'
         }])
-        .then(function(answer) {
+        .then((answer) => {
             createRow(answer.department_name, answer.over_head_costs);
         });
 }
 
-function createRow(department_name, over_head_costs) {
+const createRow = (department_name, over_head_costs) => {
     connection.query("INSERT INTO departments SET ?", {
         department_name: department_name,
         over_head_costs: over_head_costs
-    }, function(err, res) {
+    }, (err, res) => {
         if (err) throw err;
         view();
     });

@@ -1,5 +1,5 @@
 'use strict'
-var Table = require('cli-table');
+const Table = require('cli-table');
 
 var table = new Table({
     head: ['Id', 'Product', 'Department', 'Price', 'Quantity Available']
